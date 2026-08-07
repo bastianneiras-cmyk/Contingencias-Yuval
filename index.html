@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<title>Yuval SpA · App Contingencias</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+
+<!-- Icono en la pantalla de inicio. Estas etiquetas solo tienen efecto en la
+     pagina de nivel superior; por eso la aplicacion se abre dentro de este
+     contenedor y no directamente en script.google.com. -->
+<link rel="apple-touch-icon" sizes="180x180" href="icono-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icono-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icono-512.png">
+<link rel="manifest" href="manifest.json">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Contingencias">
+<meta name="theme-color" content="#0B1730">
+<meta name="mobile-web-app-capable" content="yes">
+
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%; overflow: hidden;
+    background: #0B1730;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  #marco {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    border: 0; display: block;
+    padding-top: env(safe-area-inset-top);
+    box-sizing: border-box;
+  }
+  #cargando {
+    position: fixed; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 18px;
+    background: #0B1730; color: #8FA5C6; font-size: 14px; z-index: 5;
+    transition: opacity .3s;
+  }
+  #cargando img { width: 96px; height: 96px; border-radius: 20px; }
+  .giro {
+    width: 26px; height: 26px; border: 3px solid #24406E;
+    border-top-color: #FFC400; border-radius: 50%;
+    animation: girar .8s linear infinite;
+  }
+  @keyframes girar { to { transform: rotate(360deg) } }
+  @media (prefers-reduced-motion: reduce) { .giro { animation: none } }
+  #aviso {
+    position: fixed; inset: 0; display: none; flex-direction: column;
+    align-items: center; justify-content: center; gap: 14px; padding: 28px;
+    background: #0B1730; color: #CBD9EE; text-align: center; z-index: 6;
+  }
+  #aviso a {
+    display: inline-block; background: #FFC400; color: #241C00;
+    padding: 14px 22px; border-radius: 10px; font-weight: 600;
+    text-decoration: none; margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div id="cargando">
+  <img src="icono-192.png" alt="">
+  <div class="giro"></div>
+  <div>Abriendo App Contingencias</div>
+</div>
+
+<div id="aviso">
+  <img src="icono-192.png" alt="" style="width:80px;border-radius:18px">
+  <p>No se pudo cargar la aplicación en esta ventana.<br>Ábrala directamente:</p>
+  <a id="enlaceDirecto" href="#">Abrir App Contingencias</a>
+</div>
+
+<iframe id="marco"
+        allow="geolocation; camera"
+        referrerpolicy="no-referrer-when-downgrade"></iframe>
+
+<script>
+/* =========================================================================
+   PEGUE AQUI LA URL DE SU APLICACION (la que termina en /exec)
+   ========================================================================= */
+var URL_APP = 'https://script.google.com/a/macros/yuval.cl/s/AKfycbyGKfCWLvRPXEfX43jTULmh1pJGhi5Un3d0rLqu6oPg8JaOXrQyE49hwEpAoYcC4Ejn/exec';
+
+var marco   = document.getElementById('marco');
+var cargando= document.getElementById('cargando');
+var aviso   = document.getElementById('aviso');
+
+document.getElementById('enlaceDirecto').href = URL_APP;
+marco.src = URL_APP;
+
+marco.addEventListener('load', function () {
+  cargando.style.opacity = '0';
+  setTimeout(function () { cargando.style.display = 'none'; }, 320);
+});
+
+// Si a los 15 segundos el marco no cargo, se ofrece abrir la app directamente
+setTimeout(function () {
+  if (cargando.style.display !== 'none') {
+    cargando.style.display = 'none';
+    aviso.style.display = 'flex';
+  }
+}, 15000);
+</script>
+
+</body>
+</html>
