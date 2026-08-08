@@ -47,7 +47,8 @@ body{
 
 /* ---------- Pantalla de acceso ---------- */
 .acceso{position:fixed; inset:0; z-index:100; display:grid; place-items:center;
-  background:linear-gradient(175deg, #0B1730 0%, #0E1E3E 55%, #122448 100%); padding:20px}
+  background:linear-gradient(175deg, #0B1730 0%, #0E1E3E 55%, #122448 100%);
+  padding:calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));}
 .acceso-caja{width:100%; max-width:380px; text-align:center}
 .acceso-logo{width:100%; max-width:330px; height:auto; border-radius:12px; margin-bottom:18px}
 .acceso-sub{color:#8FA5C6; font-size:14px; margin:0 0 22px}
@@ -67,8 +68,14 @@ body{
 /* ---------- Barra superior ---------- */
 .barra{
   position:sticky; top:0; z-index:40; display:flex; justify-content:space-between;
-  align-items:center; gap:12px; padding:8px 14px;
+  align-items:center; gap:12px;
   background:var(--marino); color:#fff; border-bottom:3px solid var(--amarillo);
+  /* Al instalarse en el telefono, la app ocupa toda la pantalla y la barra
+     queda bajo el reloj y la isla dinamica. Se reserva ese alto con la medida
+     que entrega el propio sistema; en el navegador vale cero. */
+  padding:calc(8px + env(safe-area-inset-top)) 14px 8px;
+  padding-left:calc(14px + env(safe-area-inset-left));
+  padding-right:calc(14px + env(safe-area-inset-right));
 }
 .barra-izq{display:flex; align-items:center; gap:12px; min-width:0}
 .barra-logo{height:44px; width:auto; border-radius:6px; flex:none}
@@ -83,7 +90,8 @@ body{
   border-radius:8px; font-size:20px; cursor:pointer; flex:none}
 
 /* ---------- Estructura ---------- */
-main{max-width:1180px; margin:0 auto; padding:18px 16px 96px}
+main{max-width:1180px; margin:0 auto;
+  padding:18px 16px calc(96px + env(safe-area-inset-bottom))}
 .centro{display:flex; flex-direction:column; align-items:center; justify-content:center;
   min-height:60vh; gap:14px; text-align:center; padding:24px}
 .spinner{width:34px;height:34px;border:3px solid #C9D5E6;border-top-color:var(--amarillo);
@@ -220,7 +228,8 @@ td input,td select{margin-top:0; min-height:42px; font-size:14px; padding:8px}
   border:2px dashed #BECBDE; border-radius:8px; touch-action:none; display:block; margin-top:8px}
 
 .pie-formulario{position:sticky; bottom:0; display:flex; gap:8px; justify-content:flex-end;
-  flex-wrap:wrap; background:var(--papel); padding:14px 0 4px; margin-top:18px;
+  flex-wrap:wrap; background:var(--papel); margin-top:18px;
+  padding:14px 0 calc(4px + env(safe-area-inset-bottom));
   border-top:1px solid #CDD8E8}
 
 .aviso{background:#FFF3CC; border-left:4px solid var(--amarillo-osc); padding:12px;
@@ -1359,9 +1368,14 @@ function subirArchivos(archivos, tipo){
 
       llamar('subirAdjunto',
         [S.fichaActual.ID_FICHA, tipo, b64, mime, a.name, miniatura],
-        function(){
+        function(r){
+          // Se conserva la vista previa que ya se genero en el telefono: pedirla
+          // de vuelta al servidor era un viaje de mas, y si por alguna razon no
+          // quedo guardada, la imagen igual se sigue viendo.
+          pendiente.ID = r.id;
+          pendiente.subiendo = false;
+          pintarAdjuntos();
           toast('Imagen cargada correctamente','ok');
-          refrescarAdjuntos();
         },
         function(err){
           S.adjuntos = S.adjuntos.filter(function(x){ return x.ID !== pendiente.ID; });
@@ -1465,7 +1479,12 @@ function guardarFirma(){
   llamar('subirAdjunto',
     [S.fichaActual.ID_FICHA,'FIRMA_JEFE', tmp.toDataURL('image/png').split(',')[1],
      'image/png','firma.png', tmp.toDataURL('image/jpeg',.6)],
-    function(){ toast('Firma guardada correctamente','ok'); refrescarAdjuntos(); });
+    function(r){
+      S.adjuntos = (S.adjuntos||[]).filter(function(x){ return x.TIPO !== 'FIRMA_JEFE'; });
+      S.adjuntos.push({ TIPO:'FIRMA_JEFE', ID:r.id, MINIATURA: tmp.toDataURL('image/jpeg',.6) });
+      pintarAdjuntos();
+      toast('Firma guardada correctamente','ok');
+    });
 }
 
 /* =========================================================================
