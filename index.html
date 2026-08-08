@@ -280,54 +280,61 @@ td input,td select{margin-top:0; min-height:42px; font-size:14px; padding:8px}
 
 /* ---------- Materiales en el telefono ----------
    La tabla obliga a desplazarse de lado en pantallas angostas. Bajo 640px
-   cada fila pasa a ser una tarjeta con sus campos apilados y rotulados. */
+   cada fila pasa a ser una tarjeta compacta: nombre arriba, y cantidad y
+   R/I en la misma linea, para que quepan varias en pantalla. */
 .solo-movil{display:none}
 
 @media (max-width:640px){
   .tabla-scroll{overflow-x:visible}
-  #tablaMateriales{min-width:0; display:block; font-size:15px}
+  #tablaMateriales{min-width:0; display:block}
   #tablaMateriales thead{display:none}
   #tablaMateriales tbody{display:block}
 
   #tablaMateriales tr{
-    display:block; position:relative;
+    display:grid; grid-template-columns:1fr 1fr; gap:8px 10px;
+    position:relative;
     background:var(--tarjeta); border:1px solid #C7D3E4;
-    border-radius:var(--radio); padding:14px 52px 12px 14px; margin-bottom:10px;
-    box-shadow:var(--sombra);
+    border-radius:8px; padding:10px 44px 10px 12px; margin-bottom:8px;
   }
-  #tablaMateriales td{display:block; border:0; padding:7px 0}
+  #tablaMateriales td{display:block; border:0; padding:0}
 
-  /* Codigo y unidad ya viajan en el subtitulo de la descripcion */
+  /* Codigo y unidad viajan en el subtitulo de la descripcion */
   #tablaMateriales td.c-cod,
   #tablaMateriales td.c-uni{display:none}
 
-  #tablaMateriales td.c-desc{padding-top:0; min-width:0 !important}
-  #tablaMateriales td.c-desc b{font-size:15px; line-height:1.3}
+  #tablaMateriales td.c-desc{grid-column:1 / -1; min-width:0 !important}
+  #tablaMateriales td.c-desc b{font-size:14px; line-height:1.25; font-weight:600}
   #tablaMateriales td.c-desc .solo-movil{
-    display:block; margin-top:3px;
-    font-size:12px; color:var(--tinta-2); letter-spacing:.03em;
+    display:block; margin-top:2px;
+    font-size:11px; color:var(--tinta-2); letter-spacing:.03em;
   }
+
+  #tablaMateriales td.c-obs{grid-column:1 / -1}
 
   #tablaMateriales td.c-cant::before,
   #tablaMateriales td.c-ri::before,
   #tablaMateriales td.c-obs::before{
-    content:attr(data-label); display:block; margin-bottom:4px;
-    font-size:11px; font-weight:700; letter-spacing:.07em;
+    content:attr(data-label); display:block; margin-bottom:2px;
+    font-size:10px; font-weight:700; letter-spacing:.06em;
     text-transform:uppercase; color:var(--tinta-2);
   }
-  #tablaMateriales td input,
-  #tablaMateriales td select{min-height:48px; font-size:16px; padding:12px}
+  #tablaMateriales td.c-ri::before{content:'R / I'}
 
-  #tablaMateriales td.c-del{position:absolute; top:12px; right:12px; padding:0}
-  #tablaMateriales td.c-del .btn{
-    min-height:34px; width:34px; padding:0; border-radius:8px; font-size:15px;
+  #tablaMateriales td input,
+  #tablaMateriales td select{
+    min-height:42px; height:42px; font-size:16px; padding:8px 10px; margin:0;
   }
 
-  /* Fila unica de aviso cuando no hay materiales */
-  #tablaMateriales tr:has(td[colspan]){padding:0; border:0; box-shadow:none; background:none}
+  #tablaMateriales td.c-del{position:absolute; top:10px; right:10px; padding:0}
+  #tablaMateriales td.c-del .btn{
+    min-height:30px; width:30px; padding:0; border-radius:7px; font-size:14px;
+  }
+
+  #tablaMateriales tr:has(td[colspan]){
+    display:block; padding:0; border:0; background:none;
+  }
 }
 </style>
-
 </head>
 <body>
 
@@ -569,9 +576,7 @@ td input,td select{margin-top:0; min-height:42px; font-size:14px; padding:8px}
 <div id="toast" class="toast oculto"></div>
 
 <script>
-/* =========================================================================
-   DIRECCION DEL SERVIDOR DE DATOS
-   ========================================================================= */
+/* DIRECCION DEL SERVIDOR DE DATOS */
 var API_URL = 'https://script.google.com/macros/s/AKfycbyGKfCWLvRPXEfX43jTULmh1pJGhi5Un3d0rLqu6oPg8JaOXrQyE49hwEpAoYcC4Ejn/exec';
 
 
@@ -588,13 +593,6 @@ var CLAVE_TOKEN = 'yuval_fichas_token';
 
 /* =========================================================================
    Puente con el servidor: todo pasa por api(token, metodo, args)
-   ========================================================================= */
-/* =========================================================================
-   Puente con el servidor
-   -------------------------------------------------------------------------
-   La interfaz vive en este dominio y los datos en Apps Script. Se envia el
-   cuerpo como texto plano a proposito: asi el navegador no exige una
-   verificacion previa que Apps Script no responde.
    ========================================================================= */
 function pedir(metodo, args){
   return fetch(API_URL, {
@@ -1271,11 +1269,17 @@ function agregarMaterial(cod){
     return toast('Tope de '+S.limites.maxMateriales+' líneas','error');
   var m = S.catalogos.materiales.filter(function(x){ return String(x.c)===String(cod); })[0];
   if (!m) return;
-  S.materiales.push({COD_MATERIAL:m.c, DESCRIPCION:m.g, UNIDAD:m.u, CANTIDAD:'',
-                     R_I:'I', OBSERVACIONES:''});
+  // Se agrega al principio: con listas largas, buscar el ultimo al final
+  // obligaba a recorrer toda la pantalla despues de cada material.
+  S.materiales.unshift({COD_MATERIAL:m.c, DESCRIPCION:m.g, UNIDAD:m.u, CANTIDAD:'',
+                        R_I:'I', OBSERVACIONES:''});
   document.getElementById('buscaMaterial').value='';
   document.getElementById('resultadosMaterial').innerHTML='';
   pintarMateriales();
+
+  // El foco salta a la cantidad de la linea recien agregada
+  var primera = document.querySelector('#tablaMateriales tbody tr td.c-cant input');
+  if (primera) primera.focus();
 }
 
 function pintarMateriales(){
