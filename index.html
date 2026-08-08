@@ -277,6 +277,55 @@ td input,td select{margin-top:0; min-height:42px; font-size:14px; padding:8px}
 .miniatura.sin-vista{display:grid; place-items:center; background:#EEF2F8}
 .miniatura.sin-vista span{font-size:10px; font-weight:700; letter-spacing:.06em;
   color:var(--tinta-2); text-align:center; padding:4px}
+
+/* ---------- Materiales en el telefono ----------
+   La tabla obliga a desplazarse de lado en pantallas angostas. Bajo 640px
+   cada fila pasa a ser una tarjeta con sus campos apilados y rotulados. */
+.solo-movil{display:none}
+
+@media (max-width:640px){
+  .tabla-scroll{overflow-x:visible}
+  #tablaMateriales{min-width:0; display:block; font-size:15px}
+  #tablaMateriales thead{display:none}
+  #tablaMateriales tbody{display:block}
+
+  #tablaMateriales tr{
+    display:block; position:relative;
+    background:var(--tarjeta); border:1px solid #C7D3E4;
+    border-radius:var(--radio); padding:14px 52px 12px 14px; margin-bottom:10px;
+    box-shadow:var(--sombra);
+  }
+  #tablaMateriales td{display:block; border:0; padding:7px 0}
+
+  /* Codigo y unidad ya viajan en el subtitulo de la descripcion */
+  #tablaMateriales td.c-cod,
+  #tablaMateriales td.c-uni{display:none}
+
+  #tablaMateriales td.c-desc{padding-top:0; min-width:0 !important}
+  #tablaMateriales td.c-desc b{font-size:15px; line-height:1.3}
+  #tablaMateriales td.c-desc .solo-movil{
+    display:block; margin-top:3px;
+    font-size:12px; color:var(--tinta-2); letter-spacing:.03em;
+  }
+
+  #tablaMateriales td.c-cant::before,
+  #tablaMateriales td.c-ri::before,
+  #tablaMateriales td.c-obs::before{
+    content:attr(data-label); display:block; margin-bottom:4px;
+    font-size:11px; font-weight:700; letter-spacing:.07em;
+    text-transform:uppercase; color:var(--tinta-2);
+  }
+  #tablaMateriales td input,
+  #tablaMateriales td select{min-height:48px; font-size:16px; padding:12px}
+
+  #tablaMateriales td.c-del{position:absolute; top:12px; right:12px; padding:0}
+  #tablaMateriales td.c-del .btn{
+    min-height:34px; width:34px; padding:0; border-radius:8px; font-size:15px;
+  }
+
+  /* Fila unica de aviso cuando no hay materiales */
+  #tablaMateriales tr:has(td[colspan]){padding:0; border:0; box-shadow:none; background:none}
+}
 </style>
 
 </head>
@@ -522,8 +571,6 @@ td input,td select{margin-top:0; min-height:42px; font-size:14px; padding:8px}
 <script>
 /* =========================================================================
    DIRECCION DEL SERVIDOR DE DATOS
-   Es la URL de la implementacion de Apps Script, la que termina en /exec.
-   Si algun dia cambia, se edita aqui y se sube este archivo.
    ========================================================================= */
 var API_URL = 'https://script.google.com/macros/s/AKfycbyGKfCWLvRPXEfX43jTULmh1pJGhi5Un3d0rLqu6oPg8JaOXrQyE49hwEpAoYcC4Ejn/exec';
 
@@ -1237,15 +1284,19 @@ function pintarMateriales(){
     tb.innerHTML = '<tr><td colspan="7" class="tenue" style="padding:16px">Sin materiales. Busque por código o glosa para agregar.</td></tr>';
     return;
   }
+  // En el telefono cada fila se muestra como tarjeta apilada (ver Css), por eso
+  // cada celda lleva su etiqueta y la descripcion incluye un subtitulo movil.
   tb.innerHTML = S.materiales.map(function(m,i){
     return '<tr>'
-      + '<td>'+m.COD_MATERIAL+'</td>'
-      + '<td style="min-width:220px">'+m.DESCRIPCION+'</td>'
-      + '<td>'+m.UNIDAD+'</td>'
-      + '<td><input type="number" step="0.001" min="0" value="'+(m.CANTIDAD||'')+'" oninput="editarMat('+i+',\'CANTIDAD\',this.value)"></td>'
-      + '<td><select onchange="editarMat('+i+',\'R_I\',this.value)">'+opt(['I','R'], m.R_I)+'</select></td>'
-      + '<td><input value="'+(m.OBSERVACIONES||m.N_SERIE||'')+'" placeholder="opcional" oninput="editarMat('+i+',\'OBSERVACIONES\',this.value)"></td>'
-      + '<td><button class="btn btn-peligro btn-mini" onclick="quitarMaterial('+i+')">X</button></td>'
+      + '<td class="c-cod" data-label="Codigo">'+m.COD_MATERIAL+'</td>'
+      + '<td class="c-desc" data-label="Material" style="min-width:220px">'
+        + '<b>'+m.DESCRIPCION+'</b>'
+        + '<span class="solo-movil">'+m.COD_MATERIAL+' &middot; '+m.UNIDAD+'</span></td>'
+      + '<td class="c-uni" data-label="Unidad">'+m.UNIDAD+'</td>'
+      + '<td class="c-cant" data-label="Cantidad"><input type="number" step="0.001" min="0" value="'+(m.CANTIDAD||'')+'" oninput="editarMat('+i+',\'CANTIDAD\',this.value)"></td>'
+      + '<td class="c-ri" data-label="Retirado / Instalado"><select onchange="editarMat('+i+',\'R_I\',this.value)">'+opt(['I','R'], m.R_I)+'</select></td>'
+      + '<td class="c-obs" data-label="Observaciones / Series"><input value="'+(m.OBSERVACIONES||m.N_SERIE||'')+'" placeholder="opcional" oninput="editarMat('+i+',\'OBSERVACIONES\',this.value)"></td>'
+      + '<td class="c-del"><button class="btn btn-peligro btn-mini" onclick="quitarMaterial('+i+')">X</button></td>'
       + '</tr>';
   }).join('');
 }
